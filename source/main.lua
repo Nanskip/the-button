@@ -12,6 +12,8 @@ Models = {
 
 Textures = {
     intro_logo = "textures/intro_logo.png",
+    floor_concrete = "textures/floor_concrete.png",
+    wall_concrete = "textures/wall_concrete.png",
 }
 
 Sounds = {

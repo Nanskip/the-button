@@ -4,7 +4,7 @@ ui_manager.init = function(self)
     debug.log("UI Manager initialized.")
     self.config = {
         game = {
-            name = "Pocket Lands",
+            name = "The Button",
             version = "0.1",
             author = "Nanskip",
             gdk = "NaN-GDK",

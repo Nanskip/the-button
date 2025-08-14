@@ -125,8 +125,8 @@ loading_screen.finish = function(self)
             sound:Destroy()
         end)
 
-    game_controller:init()
     ui_manager:init()
+    map_manager:init()
 end
 
 return loading_screen
