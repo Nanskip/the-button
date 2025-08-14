@@ -9,7 +9,7 @@ loading_screen.start = function(self)
     self.background.Height = Screen.Height
 
     -- creating game title
-    self.game_title = _UIKIT:createText("Convy 2")
+    self.game_title = _UIKIT:createText("The Button")
     self.title = _UIKIT:createText("Powered by NaN-GDK")
     self.loading_text = _UIKIT:createText("Downloading assets...")
 
@@ -125,7 +125,6 @@ loading_screen.finish = function(self)
             sound:Destroy()
         end)
 
-    ui_manager:init()
     map_manager:init()
 end
 
