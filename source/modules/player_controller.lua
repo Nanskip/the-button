@@ -40,10 +40,21 @@ player_controller.init = function(self)
         end
     end
 
+    self.step_sound1 = AudioSource()
+    self.step_sound1.Sound = sounds.step_sound1
+    self.step_sound1.Volume = 0.3
+    self.step_sound1:SetParent(Camera)
+
+    self.step_sound2 = AudioSource()
+    self.step_sound2.Sound = sounds.step_sound2
+    self.step_sound2.Volume = 0.3
+    self.step_sound2:SetParent(Camera)
+
     self.tick = Object()
     self.t = 0
+    self.motion_t = 0
 
-    self.tick.Tick = function(_)
+    self.tick.Tick = function(_, dt)
         Camera.Position = Number3(
             Player.Position.X,
             Player.Position.Y+10,
@@ -80,6 +91,39 @@ player_controller.init = function(self)
         if self.t ~= nil then
             self.t = self.t + 1
         end
+
+        if not (Player.Motion.X < 0.1 and Player.Motion.X > -0.1) or not (Player.Motion.Z < 0.1 and Player.Motion.Z > -0.1) then
+            self.motion_t = self.motion_t + dt
+        else
+            self.motion_t = 0.2
+        end
+
+        if self.motion_t > 0.4 then
+            if math.random(0, 1) == 0 then
+                self.step_sound1:Play()
+            else
+                self.step_sound2:Play()
+            end
+            self.motion_t = 0
+        end
+
+        if Player.isExiting then
+            Player.Motion = Number3(0, 0, 0)
+            if Player.white_screen == nil then
+                Player.white_screen = _UIKIT:createFrame()
+                Player.exit_timer = 0
+
+                local exit_sound = AudioSource()
+                exit_sound.Sound = sounds.exit_music
+                exit_sound:SetParent(Camera)
+                exit_sound:Play()
+            end
+
+            Player.exit_timer = Player.exit_timer + (dt*63)
+            Player.white_screen.Width = Screen.Width
+            Player.white_screen.Height = Screen.Height
+            Player.white_screen.Color = Color(255, 255, 255, math.min(math.floor(Player.exit_timer), 255))
+        end
     end
 
     Player.Position = Number3(30, 1, 10)
@@ -89,10 +133,14 @@ player_controller.init = function(self)
         Player.Head.LocalRotation = Rotation(-dy * 0.01, 0, 0) * Player.Head.LocalRotation
 
         local dpad = require("controls").DirectionalPadValues
-        Player.Motion = (Player.Forward * dpad.Y + Player.Right * dpad.X) * Player._speed
+        if not Player.isExiting then
+            Player.Motion = (Player.Forward * dpad.Y + Player.Right * dpad.X) * Player._speed
+        end
     end
 
     Client.DirectionalPad = function(x, y)
-        Player.Motion = (Player.Forward * y + Player.Right * x) * Player._speed
+        if not Player.isExiting then
+            Player.Motion = (Player.Forward * y + Player.Right * x) * Player._speed
+        end
     end
 end

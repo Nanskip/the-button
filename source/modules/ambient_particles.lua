@@ -35,6 +35,9 @@ ambient_particles.init = function(self)
         end
         particle:random_pos()
         particle.Tick = function(p, dt)
+            if map_manager.isLight then
+                particle.Color = Color(255, 255, 255)
+            end
             -- rotate particle towards camera
             local dir = (Camera.Position - p.Position):Normalize()
             local yaw = math.atan2(dir.X, dir.Z)

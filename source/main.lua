@@ -12,6 +12,8 @@ Models = {
     lamp = "models/lamp.glb",
     mechanical_hand = "models/mechanical_hand.glb",
     button = "models/button.glb",
+    lever = "models/lever.glb",
+    rusty_tube = "models/rusty_tube.glb",
 }
 
 Textures = {
@@ -22,6 +24,7 @@ Textures = {
     mud_texture = "textures/mud_texture.png",
     skip_tag = "textures/skip_tag.png",
     pointer = "textures/pointer.png",
+    white_gradient = "textures/white_gradient.png",
 }
 
 Sounds = {
@@ -33,8 +36,17 @@ Sounds = {
     arm_move_in = "sounds/arm_move_in.mp3",
     arm_move_out = "sounds/arm_move_out.mp3",
     button_click = "sounds/button_click.mp3",
+    impact_hit = "sounds/impact_hit.mp3",
+    exit_door_open1 = "sounds/exit_door_open1.mp3",
 
     pt1_var1 = "sounds/pt1_var1.mp3",
+    voice_glitch = "sounds/voice_glitch.mp3",
+    voice_offline = "sounds/voice_offline.mp3",
+    new_voice_assistant = "sounds/new_voice_assistant.mp3",
+    new_assistant = "sounds/new_assistant.mp3",
+
+    step_sound1 = "sounds/step_sound1.mp3",
+    step_sound2 = "sounds/step_sound2.mp3",
 }
 
 Data = {
