@@ -58,6 +58,16 @@ map_manager.createMap = function(self)
     tag.Scale = 10/128
     tag:SetParent(self.map)
 
+    -- add mud on floor
+    local mud = Quad()
+    mud.Color = Color(255, 255, 255, 200)
+    mud.Size = Number2(64, 64)
+    mud.Image = {data = textures.mud_texture, filtering = false}
+    mud.Position = Number3(5, 0.01, 7)
+    mud.Rotation = Rotation(math.pi/2, 0, 0)
+    mud.Scale = 10/64
+    mud:SetParent(World)
+
     -- create the lamp
     self.lamp_light1 = Light()
     self.lamp_light1.Color = Color(255, 255, 255)
@@ -71,17 +81,48 @@ map_manager.createMap = function(self)
     self.lamp_light2.Hardness = 0
     self.lamp_light2:SetParent(self.map)
 
+    self.lamp_flicker1 = AudioSource()
+    self.lamp_flicker1.Sound = sounds.lamp_flicker1
+    self.lamp_flicker1:SetParent(self.lamp_light1)
+
+    self.lamp_flicker2 = AudioSource()
+    self.lamp_flicker2.Sound = sounds.lamp_flicker2
+    self.lamp_flicker2:SetParent(self.lamp_light2)
+
     self.lamp = models.lamp[1]:Copy()
-    self.lamp.Position = Number3(30, 20, 30)
+    self.lamp.light_part = models.lamp[2]:Copy()
+    self.lamp.light_part:SetParent(self.lamp)
+    self.lamp.light_part.IsUnlit = true
+    self.lamp.Position = Number3(30, 35, 30)
+    self.lamp.Pivot = Number3(0, 30, 0)
     self.lamp:SetParent(self.map)
     self.lamp.Scale = 0.5
-    self.lamp.IsUnlit = true
     self.lamp.t = 0
     self.lamp.Tick = function(s)
         s.Rotation.Y = math.sin(s.t*0.01)*0.1 + math.pi/2
+        s.Rotation.X = math.cos(s.t*0.015)*0.15
         self.lamp_light1.Position = Number3(30, 20, 30) + s.Forward*2
         self.lamp_light2.Position = Number3(30, 20, 30) + s.Backward*2
         s.t = s.t + 1
+
+        if math.random(0, 100) == 0 then
+            local rand_color = 150 + math.random(0, 50)
+            if math.random(0, 1) == 0 then
+                self.lamp_flicker1:Play()
+                self.lamp_light1.Color = Color(rand_color, rand_color, rand_color)
+                
+                Timer(0.05, false, function()
+                    self.lamp_light1.Color = Color(255, 255, 255)
+                end)
+            else
+                self.lamp_flicker2:Play()
+                self.lamp_light2.Color = Color(rand_color, rand_color, rand_color)
+                
+                Timer(0.05, false, function()
+                    self.lamp_light2.Color = Color(255, 255, 255)
+                end)
+            end
+        end
     end
 
     self.lamp_sound1 = AudioSource()
@@ -127,6 +168,8 @@ map_manager.createMap = function(self)
     end)
 
     debug.log("Map Manager: map created.")
+
+    ambient_particles:init()
 end
 
 map_manager.start_game = function(self)

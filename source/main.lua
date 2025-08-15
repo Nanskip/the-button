@@ -19,6 +19,9 @@ Textures = {
     floor_concrete = "textures/floor_concrete.png",
     wall_concrete = "textures/wall_concrete.png",
     hand_icon = "textures/hand_icon.png",
+    mud_texture = "textures/mud_texture.png",
+    skip_tag = "textures/skip_tag.png",
+    pointer = "textures/pointer.png",
 }
 
 Sounds = {
