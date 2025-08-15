@@ -118,6 +118,7 @@ HTTP:Get("{url}", function(res)
                 else
                     models.{key}[#models.{key}+1] = asset
                 end
+                asset:SetParent(nil)
                 _log("Downloaded and loaded model {key}")
             end
             loaded = loaded + 1

@@ -117,7 +117,7 @@ loading_screen.finish = function(self)
     -- play loading completed sound
     local sound = AudioSource()
     sound:SetParent(Camera)
-    sound.Sound = sounds.loading_completed
+    sound.Sound = sounds.light_switch
     sound:Play()
 
     Timer(3, false, 
@@ -126,6 +126,7 @@ loading_screen.finish = function(self)
         end)
 
     map_manager:init()
+    player_controller:init()
 end
 
 return loading_screen

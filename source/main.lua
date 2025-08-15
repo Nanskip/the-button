@@ -4,20 +4,31 @@ Modules = {
     debug = "modules/debug.lua",
     mathlib = "modules/mathlib.lua",
     advanced_ui = "modules/advanced_ui.lua",
+    map_manager = "modules/map_manager.lua",
+    player_controller = "modules/player_controller.lua",
 }
 
 Models = {
-    
+    lamp = "models/lamp.glb",
+    mechanical_hand = "models/mechanical_hand.glb",
+    button = "models/button.glb",
 }
 
 Textures = {
     intro_logo = "textures/intro_logo.png",
     floor_concrete = "textures/floor_concrete.png",
     wall_concrete = "textures/wall_concrete.png",
+    hand_icon = "textures/hand_icon.png",
 }
 
 Sounds = {
     loading_completed = "sounds/loading_completed.mp3",
+    lamp_buzz = "sounds/lamp_buzz.mp3",
+    narrator_game_start = "sounds/game_start.mp3",
+    light_switch = "sounds/light_switch.mp3",
+    dark_ambient = "sounds/dark_ambient.mp3",
+    arm_move_in = "sounds/arm_move_in.mp3",
+    arm_move_out = "sounds/arm_move_out.mp3",
 }
 
 Data = {
