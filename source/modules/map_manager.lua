@@ -3,6 +3,9 @@ local map_manager = {}
 map_manager.init = function(self)
     debug.log("Map Manager initialized.")
 
+    map_manager.narrator_glitch = AudioSource()
+    map_manager.narrator_glitch.Sound = sounds.voice_glitch
+    map_manager.narrator_glitch:SetParent(Camera)
     self:createMap()
 end
 
@@ -44,6 +47,16 @@ map_manager.createMap = function(self)
     end
 
     self.map:SetParent(World)
+
+    -- add skip tag on wall
+    local tag = Quad()
+    tag.Color = Color(255, 255, 255, 100)
+    tag.Size = Number2(128, 128)
+    tag.Image = {data = textures.skip_tag, filtering = false}
+    tag.Position = Number3(60-0.01, 5, 40)
+    tag.Rotation = Rotation(0, math.pi/2, 0)
+    tag.Scale = 10/128
+    tag:SetParent(self.map)
 
     -- create the lamp
     self.lamp_light1 = Light()
@@ -127,18 +140,6 @@ map_manager.start_game = function(self)
         narrator_game_start1:Destroy()
     end)
 
-    Timer(0.03, false, function()
-        local narrator_game_start2 = AudioSource()
-        narrator_game_start2.Sound = sounds.game_start
-        narrator_game_start2:SetParent(Camera)
-        narrator_game_start2.Volume = 0.2
-        narrator_game_start2:Play()
-
-        Timer(26, false, function()
-            narrator_game_start2:Destroy()
-        end)
-    end)
-
     local button = Object()
     button.base = models.button[1]:Copy()
     button.base:SetParent(button)
@@ -146,19 +147,67 @@ map_manager.start_game = function(self)
     button.button = models.button[2]:Copy()
     button.button.clickable = true
     button.button:SetParent(button)
+    button.button.sound = AudioSource()
+    button.button.sound.Sound = sounds.button_click
+    button.button.sound:SetParent(button)
+    button.button.sound.Spatialized = true
+
     button.button.Physics = PhysicsMode.Static
     button.button.CollisionGroups = {5}
     button.Rotation.Y = math.pi
     button.Scale = 2
+    button.button.clickedpos = Number3(0, -0.2, 0.1)
 
-    self:use_mechanical_hand(
-        {
-            position = Number3(30, 10, 50),
-            object = button,
-            offset = Number3(0, 10, 0),
-            handle_rotations = -0.05
-        }
-    )
+    button.button.click = function(self)
+        if self.clickable then
+            self.Position = self.Position + self.clickedpos
+            self.sound:Play()
+            self.clickable = false
+
+            if narrator_game_start1.IsPlaying then
+                narrator_game_start1:Stop()
+                map_manager.narrator_glitch:Play()
+                Timer(2, false, function()
+                    map_manager:start_pt1_var1()
+                    map_manager:use_mechanical_hand(
+                        {
+                            position = Number3(30, 10, 50),
+                            object = self:GetParent(),
+                            offset = Number3(0, 10, 0),
+                            handle_rotations = -0.05,
+                            take_out = true
+                        }
+                    )
+                end)
+            else
+                map_manager:start_pt1_var1()
+                map_manager:use_mechanical_hand(
+                    {
+                        position = Number3(30, 10, 50),
+                        object = self:GetParent(),
+                        offset = Number3(0, 10, 0),
+                        handle_rotations = -0.05,
+                        take_out = true
+                    }
+                )
+            end
+
+            Timer(1, false, function()
+                self.sound:Destroy()
+            end)
+        end
+    end
+
+    Timer(20, false, function()
+        self:use_mechanical_hand(
+            {
+                position = Number3(30, 10, 50),
+                object = button,
+                offset = Number3(0, 10, 0),
+                handle_rotations = -0.05
+            }
+        )
+    end)
 end
 
 map_manager.use_mechanical_hand = function(self, config)
@@ -169,6 +218,7 @@ map_manager.use_mechanical_hand = function(self, config)
         reset_rotations = true, -- resets rotations after putting object in scene at out_time/2
         object = "none",
         offset = "none",
+        take_out = false -- to remove object from scene
     }
     local cfg = {0}
     for k, v in pairs(defaultConfig) do
@@ -191,17 +241,19 @@ map_manager.use_mechanical_hand = function(self, config)
     hand.right_handle:SetParent(hand)
     hand.left_handle:SetParent(hand)
 
-    if cfg.object ~= nil or cfg.object == "none" then
-        hand.object = cfg.object
-        hand.object.save_rotation = Rotation(
-            hand.object.Rotation.X,
-            hand.object.Rotation.Y,
-            hand.object.Rotation.Z
-        )
-        hand.object:SetParent(hand)
-        hand.object.Position = hand.Position - (cfg.offset or 0)
-        hand.object.Rotation.Y = hand.object.Rotation.Y - math.pi/2
-        debug.log("Hand object: " .. tostring(hand.object))
+    if cfg.object ~= nil or cfg.object ~= "none" then
+        if not cfg.take_out then
+            hand.object = cfg.object
+            hand.object.save_rotation = Rotation(
+                hand.object.Rotation.X,
+                hand.object.Rotation.Y,
+                hand.object.Rotation.Z
+            )
+            hand.object:SetParent(hand)
+            hand.object.Position = hand.Position - (cfg.offset or 0)
+            hand.object.Rotation.Y = hand.object.Rotation.Y - math.pi/2
+            debug.log("Hand object: " .. tostring(hand.object))
+        end
     else
         debug.log("Hand object: none")
     end
@@ -218,7 +270,7 @@ map_manager.use_mechanical_hand = function(self, config)
     hand.move_in_sound:Play()
 
     hand.move_out_sound = AudioSource()
-    hand.move_out_sound.Sound = sounds.arm_move_in
+    hand.move_out_sound.Sound = sounds.arm_move_out
     hand.move_out_sound:SetParent(hand)
     hand.move_out_sound.Volume = 0.75
     hand.move_out_sound.Pitch = (1 + (1 / cfg.time_multiplier)) / 2
@@ -266,6 +318,21 @@ map_manager.use_mechanical_hand = function(self, config)
             if not s.move_out_sound.IsPlaying then
                 s.move_out_sound:Play()
             end
+
+            if cfg.take_out and s.object == nil then
+                local obj = cfg.object
+                if obj ~= nil and obj.Parent == World then
+                    s.object = obj
+                    s.object.save_rotation = Rotation(
+                        s.object.Rotation.X,
+                        s.object.Rotation.Y,
+                        s.object.Rotation.Z
+                    )
+                    s.object:SetParent(s)
+                    s.object.Position = s.Position - (cfg.offset or 0)
+                    s.object.Rotation.Y = s.object.Rotation.Y - math.pi/2
+                end
+            end
         else
             s:Destroy()
         end
@@ -280,6 +347,97 @@ map_manager.use_mechanical_hand = function(self, config)
     return hand
 end
 
+
+function map_manager.start_pt1_var1()
+    local narrator_pt1_var1_1 = AudioSource()
+    narrator_pt1_var1_1.Sound = sounds.pt1_var1
+    narrator_pt1_var1_1:SetParent(Camera)
+    narrator_pt1_var1_1:Play()
+
+    Timer(20, false, function()
+        narrator_pt1_var1_1:Destroy()
+    end)
+
+    local button = Object()
+    button.base = models.button[1]:Copy()
+    button.base:SetParent(button)
+    button.base.Physics = PhysicsMode.Static
+    button.button = models.button[2]:Copy()
+    button.button.clickable = true
+    button.button:SetParent(button)
+    button.button.sound = AudioSource()
+    button.button.sound.Sound = sounds.button_click
+    button.button.sound:SetParent(button)
+    button.button.sound.Spatialized = true
+
+    local text_overlay = Text()
+    text_overlay.Text = "DO\nNOT\nPRESS"
+    text_overlay.Color = Color(255, 255, 255)
+    text_overlay.Format = { alignment="center" }
+    text_overlay.Scale = 0.1
+    text_overlay:SetParent(button)
+    text_overlay.Tick = function(self)
+        self.Position = button.button.Position + Number3(0, 0.4, 0)
+        self.Rotation.Y = 0
+        self.Rotation.X = math.pi/2-0.35
+    end
+
+    button.button.Physics = PhysicsMode.Static
+    button.button.CollisionGroups = {5}
+    button.Rotation.Y = math.pi
+    button.Scale = 2
+    button.button.clickedpos = Number3(0, -0.2, 0.1)
+
+    button.button.click = function(self)
+        if self.clickable then
+            self.Position = self.Position + self.clickedpos
+            self.sound:Play()
+            self.clickable = false
+            Timer(1, false, function()
+                self.sound:Destroy()
+            end)
+
+            if narrator_pt1_var1_1.IsPlaying then
+                narrator_pt1_var1_1:Stop()
+                map_manager.narrator_glitch:Play()
+                Timer(2, false, function()
+                    map_manager:start_pt1_var1()
+                    map_manager:use_mechanical_hand(
+                        {
+                            position = Number3(30, 10, 50),
+                            object = self:GetParent(),
+                            offset = Number3(0, 10, 0),
+                            handle_rotations = -0.05,
+                            take_out = true
+                        }
+                    )
+                end)
+            else
+                map_manager:start_pt1_var1()
+                map_manager:use_mechanical_hand(
+                    {
+                        position = Number3(30, 10, 50),
+                        object = self:GetParent(),
+                        offset = Number3(0, 10, 0),
+                        handle_rotations = -0.05,
+                        take_out = true
+                    }
+                )
+            end
+        end
+    end
+
+    Timer(15, false, function()
+        map_manager:use_mechanical_hand(
+            {
+                position = Number3(30, 10, 50),
+                object = button,
+                offset = Number3(0, 10, 0),
+                handle_rotations = -0.05
+            }
+        )
+    end)
+end
 
 
 

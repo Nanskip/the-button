@@ -1,6 +1,7 @@
 local loading_screen = {}
 
 loading_screen.start = function(self)
+    self.initialized = true
     debug.log("Loading screen initialized.")
 
     self.background = _UIKIT:frame()
@@ -24,6 +25,9 @@ loading_screen.start = function(self)
 end
 
 loading_screen.update = function(self)
+    if not self.initialized then
+        return
+    end
     local basePos = {Screen.Width/2, Screen.Height/2}
     self.game_title.pos = {
         basePos[1] - self.game_title.Width/2,
@@ -40,23 +44,31 @@ loading_screen.update = function(self)
 end
 
 loading_screen.loading_text_update = function(self, text)
+    if not self.initialized then
+        return
+    end
     if self.loading_text ~= nil then
         self.loading_text.Text = text
     end
 end
 
 loading_screen.intro = function(self)
+    if not self.initialized then
+        return
+    end
     debug.log("Intro initialized.")
 
-    -- removing game title
-    self.game_title:remove()
-    self.game_title = nil
+    if self.game_title ~= nil then
+        -- removing game title
+        self.game_title:remove()
+        self.game_title = nil
 
-    self.title:remove()
-    self.title = nil
+        self.title:remove()
+        self.title = nil
 
-    self.loading_text:remove()
-    self.loading_text = nil
+        self.loading_text:remove()
+        self.loading_text = nil
+    end
 
     -- showing intro logo
     self.intro_logo = _UIKIT:createFrame()
@@ -107,6 +119,9 @@ loading_screen.intro = function(self)
 end
 
 loading_screen.finish = function(self)
+    if not self.initialized then
+        return
+    end
     debug.log("Loading screen removed.")
     self.background:remove()
     self.background = nil

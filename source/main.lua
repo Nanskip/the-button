@@ -29,6 +29,9 @@ Sounds = {
     dark_ambient = "sounds/dark_ambient.mp3",
     arm_move_in = "sounds/arm_move_in.mp3",
     arm_move_out = "sounds/arm_move_out.mp3",
+    button_click = "sounds/button_click.mp3",
+
+    pt1_var1 = "sounds/pt1_var1.mp3",
 }
 
 Data = {
