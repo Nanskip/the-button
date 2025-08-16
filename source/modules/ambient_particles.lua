@@ -7,7 +7,7 @@ ambient_particles.init = function(self)
     self.count = 300
     self.lifetime = 3
     self.fadetime = 0.5
-    self.size = 0.1
+    self.size = 0.05
     self.color = Color(200, 200, 200)
 
     self.particles = {}
@@ -15,12 +15,12 @@ ambient_particles.init = function(self)
     -- generate first count of particles into pool
     for i = 1, self.count do
         local particle = Quad()
-        particle.Color = self.color
         particle.lifetime = self.lifetime + (math.random(0, 50)/10)
         particle.life = 0
         particle.Scale = self.size
         particle.Anchor = Number2(0.5, 0.5)
         particle.fadetime = self.fadetime
+        particle.Color = self.color
         particle.random_pos = function(p)
             p.Position = Number3(
                 math.random(10, 50),

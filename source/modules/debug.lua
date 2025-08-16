@@ -22,6 +22,22 @@ function debug.getLogs()
     Dev:CopyToClipboard(logs)
 end
 
+function debug.createIcon(self, parent, name)
+    -- create an icon, used parent position
+    local icon = Quad()
+    icon.Size = Number2(32, 32)
+    icon.Image = {data = textures[name], filtering = false, alpha = true}
+    icon.Scale = 2/32
+    icon.Anchor = Number2(0.5, 0.5)
+    icon:SetParent(parent)
+    icon.IsUnlit = true
+    icon.Tick = function(s)
+        s.Forward = Camera.Forward
+    end
+
+    return icon
+end
+
 function debug.openConsole(self)
     local cfg = {
         title = "Console",

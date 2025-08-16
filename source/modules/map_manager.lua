@@ -156,8 +156,8 @@ map_manager.createMap = function(self)
     self.lamp.Tick = function(s)
         s.Rotation.Y = math.sin(s.t*0.01)*0.1 + math.pi/2
         s.Rotation.X = math.cos(s.t*0.015)*0.15
-        self.lamp_light1.Position = s.Position - s.Pivot/2 + s.Forward*3
-        self.lamp_light2.Position = s.Position - s.Pivot/2 + s.Backward*3
+        self.lamp_light1.Position = s.Position + s.Down*16 + s.Forward*3
+        self.lamp_light2.Position = s.Position + s.Down*16 + s.Backward*3
         s.t = s.t + 1
 
         if not s.turned_off then
@@ -191,12 +191,16 @@ map_manager.createMap = function(self)
     self.lamp_light1.Radius = 50
     self.lamp_light1.Hardness = 0
     self.lamp_light1:SetParent(self.map)
+    self.lamp_light1.CastsShadows = true
+    debug.light_icon1 = debug:createIcon(self.lamp_light1, "lightbulb")
 
     self.lamp_light2 = Light()
     self.lamp_light2.Color = Color(255, 255, 255)
     self.lamp_light2.Radius = 50
     self.lamp_light2.Hardness = 0
     self.lamp_light2:SetParent(self.map)
+    self.lamp_light2.CastsShadows = true
+    debug.light_icon2 = debug:createIcon(self.lamp_light2, "lightbulb")
 
     self.lamp.turn_off = function(l)
         l.turned_off = true
@@ -316,9 +320,15 @@ map_manager.open_exit = function(self)
         self.t = self.t + dt
         if sound ~= nil and not sound.IsPlaying then
             sound:Play()
-            Timer(5.5, false, function()
+            Timer(4.5, false, function()
                 sound:Stop()
                 sound = nil
+
+                local sound2 = AudioSource()
+                sound2.Sound = sounds.exit_door_open2
+                sound2:SetParent(map_manager.exit)
+                sound2.Spatialized = true
+                sound2:Play()
             end)
         end
 
@@ -686,25 +696,37 @@ function map_manager.start_pt2_var1()
         impact_sound:Play()
 
         -- paint the walls and floors at white
+        local black_screen = _UIKIT:frame()
+        black_screen.Color = Color(0, 0, 0)
+        black_screen.Size = {Screen.Width, Screen.Height}
+
         Timer(1, false, function()
-            for key, value in ipairs(map_manager.walls) do
-                if value.IsUnlit then
-                    return
+            for key, value in ipairs(map_manager.floors) do
+                if not value.IsUnlit then
+                    value.Image = {data = textures.floor_concrete_clear, filtering = false}
                 end
-                value.Image = {data = textures.wall_concrete_clear, filtering = false}
             end
 
-            for key, value in ipairs(map_manager.floors) do
-                if value.IsUnlit then
-                    return
+            for key, value in ipairs(map_manager.walls) do
+                if not value.IsUnlit then
+                    value.Image = {data = textures.wall_concrete_clear, filtering = false}
                 end
-                value.Image = {data = textures.floor_concrete_clear, filtering = false}
             end
 
             map_manager.lamp_light1.Radius = 65
             map_manager.lamp_light2.Radius = 65
 
             map_manager.isLight = true
+
+            for i=1, 10 do
+                Timer(0.1 * i, false, function()
+                    black_screen.Color.A = 1.0 - (i * 0.1)
+                end)
+            end
+            Timer(1, false, function()
+                black_screen:remove()
+                black_screen = nil
+            end)
         end)
 
         Timer(5, false, function()
@@ -829,7 +851,7 @@ function map_manager.start_leave_lever(self)
     button.button.Physics = PhysicsMode.Static
     button.button.CollisionGroups = {5}
     button.Scale = 2
-    button.button.clickedpos = Number3(0, -0.2, 0.1)
+    button.button.clickedpos = Number3(0, -0.2, -0.1)
 
     button.button.click = function(self)
         if self.clickable then
@@ -838,7 +860,7 @@ function map_manager.start_leave_lever(self)
             self.clickable = false
 
             map_manager:open_exit()
-            map_manager.ending = "Protocol violation"
+            map_manager.ending = "protocolviolation"
             map_manager:use_mechanical_hand(
                 {
                     position = Number3(30, 10, 10),
@@ -860,7 +882,7 @@ function map_manager.start_leave_lever(self)
                 offset = Number3(0, 10, 0),
                 handle_rotations = -0.05,
                 handle_rotations_off = -0.3,
-                time_multiplier = 3,
+                time_multiplier = 1.5,
             }
         )
     end)

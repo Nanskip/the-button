@@ -25,6 +25,9 @@ Textures = {
     skip_tag = "textures/skip_tag.png",
     pointer = "textures/pointer.png",
     white_gradient = "textures/white_gradient.png",
+
+    --debug
+    lightbulb = "textures/lightbulb.png",
 }
 
 Sounds = {
@@ -38,6 +41,7 @@ Sounds = {
     button_click = "sounds/button_click.mp3",
     impact_hit = "sounds/impact_hit.mp3",
     exit_door_open1 = "sounds/exit_door_open1.mp3",
+    exit_door_open2 = "sounds/exit_door_open2.mp3",
 
     pt1_var1 = "sounds/pt1_var1.mp3",
     voice_glitch = "sounds/voice_glitch.mp3",
@@ -65,6 +69,7 @@ end
 _ON_START_CLIENT = function()
     _UIKIT = require("uikit")
     _UI = advanced_ui
+    _BADGES = require("badge")
 
     loading_screen:start()
 end

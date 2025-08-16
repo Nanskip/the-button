@@ -65,6 +65,7 @@ player_controller.init = function(self)
             Player.Head.Rotation.Z
         )
         self.hand_icon.pos = Number2(Screen.Width/2-20, Screen.Height/2-20)
+        self.pointer.pos = Number2(Screen.Width/2-4, Screen.Height/2-4)
 
         Camera.Rotation = Camera.Rotation * Player.camera_rotation_offset
         Player.camera_rotation_offset.X = math.sin(self.t*0.02)*0.005
@@ -117,6 +118,11 @@ player_controller.init = function(self)
                 exit_sound.Sound = sounds.exit_music
                 exit_sound:SetParent(Camera)
                 exit_sound:Play()
+
+                Timer(5, false, function()
+                    exit_sound:Destroy()
+                    ending_manager:give_ending(map_manager.ending)
+                end)
             end
 
             Player.exit_timer = Player.exit_timer + (dt*63)
