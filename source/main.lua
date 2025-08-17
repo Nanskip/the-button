@@ -14,6 +14,7 @@ Models = {
     button = "models/button.glb",
     lever = "models/lever.glb",
     rusty_tube = "models/rusty_tube.glb",
+    camera = "models/camera.glb",
 }
 
 Textures = {
@@ -25,6 +26,7 @@ Textures = {
     skip_tag = "textures/skip_tag.png",
     pointer = "textures/pointer.png",
     white_gradient = "textures/white_gradient.png",
+    border_concrete_clear = "textures/border_concrete_clear.png",
 
     --debug
     lightbulb = "textures/lightbulb.png",
@@ -42,6 +44,7 @@ Sounds = {
     impact_hit = "sounds/impact_hit.mp3",
     exit_door_open1 = "sounds/exit_door_open1.mp3",
     exit_door_open2 = "sounds/exit_door_open2.mp3",
+    camera_move = "sounds/camera_move.mp3",
 
     pt1_var1 = "sounds/pt1_var1.mp3",
     voice_glitch = "sounds/voice_glitch.mp3",
@@ -64,6 +67,11 @@ Other = {
 _ON_START = function()
     loading_screen:intro()
     _UI:init()
+
+    for i=1, World.ChildrenCount do
+        -- add a tag to all basic world objects
+        World:GetChild(i)._IS_DEFAULT = true
+    end
 end
 
 _ON_START_CLIENT = function()

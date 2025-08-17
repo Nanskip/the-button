@@ -33,6 +33,12 @@ function debug.createIcon(self, parent, name)
     icon.IsUnlit = true
     icon.Tick = function(s)
         s.Forward = Camera.Forward
+
+        if _debug then
+            s.Color.A = 255
+        else
+            s.Color.A = 0
+        end
     end
 
     return icon

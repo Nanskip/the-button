@@ -10,6 +10,7 @@ map_manager.init = function(self)
 end
 
 map_manager.createMap = function(self)
+    self.timers = {}
     debug.log("Map Manager: creating map.")
 
     self.map = Object()
@@ -19,9 +20,17 @@ map_manager.createMap = function(self)
     map_manager.floors = {}
 
     for key, value in ipairs(floor_table) do
+        local image = textures.floor_concrete
+        local width = 128
+
         local floor = Quad()
-        floor.Size = Number2(128, 128)
-        floor.Image = {data = textures.floor_concrete, filtering = false}
+        if value.isBorder then
+            image = textures.border_concrete_clear
+            width = 8
+            floor.isBorder = true
+        end
+        floor.Size = Number2(width, 128)
+        floor.Image = {data = image, filtering = false}
         floor.Position = value.pos * 20
         floor.Rotation = value.rot
         floor.Scale = scale_multiplier/128
@@ -43,12 +52,21 @@ map_manager.createMap = function(self)
     map_manager.walls = {}
 
     for key, value in ipairs(wall_table) do
+        local image = textures.wall_concrete
+        local width = 128
+
         local wall = Quad()
-        wall.Size = Number2(128, 128)
-        wall.Image = {data = textures.wall_concrete, filtering = false}
+        if value.isBorder then
+            image = textures.border_concrete_clear
+            width = 8
+            wall.isBorder = true
+        end
+
+        wall.Size = Number2(width, 128)
+        wall.Image = {data = image, filtering = false}
         wall.Position = value.pos * 20
         wall.Rotation = value.rot
-        wall.Scale = scale_multiplier/128
+        wall.Scale = Number3(scale_multiplier/128, scale_multiplier/128, scale_multiplier/128)
         wall.Shadow = true
         wall.Physics = PhysicsMode.Static
         if value.make_darker then
@@ -64,7 +82,8 @@ map_manager.createMap = function(self)
             map_manager.exit.side1:SetParent(map_manager.exit)
             map_manager.exit.side1.Rotation = Rotation(0, -math.pi, 0)
             map_manager.exit.side1.Size = Number2(128, 128)
-            map_manager.exit.side1.Scale = Number3(0.1, 1, 1)
+            map_manager.exit.side1.Image = {data = textures.border_concrete_clear, filtering = false}
+            map_manager.exit.side1.Scale = Number3(8/128, 128/128, 1)
 
             map_manager.exit.side2 = Quad()
             map_manager.exit.side2.Color = Color(150, 150, 150)
@@ -72,13 +91,15 @@ map_manager.createMap = function(self)
             map_manager.exit.side2.Rotation = Rotation(0, -math.pi, 0)
             map_manager.exit.side2.Position.Z = map_manager.exit.Position.Z + 20
             map_manager.exit.side2.Size = Number2(128, 128)
-            map_manager.exit.side2.Scale = Number3(0.1, 1, 1)
+            map_manager.exit.side2.Image = {data = textures.border_concrete_clear, filtering = false}
+            map_manager.exit.side2.Scale = Number3(8/128, 128/128, 1)
 
             map_manager.exit.backside = Quad()
             map_manager.exit.backside.Color = Color(150, 150, 150)
             map_manager.exit.backside:SetParent(map_manager.exit)
-            map_manager.exit.backside.Position = map_manager.exit.Position - Number3(2, 0, 0)
+            map_manager.exit.backside.Position = map_manager.exit.Position - Number3(1.25, 0, 0)
             map_manager.exit.backside.Size = Number2(128, 128)
+            map_manager.exit.backside.Image = {data = textures.wall_concrete_clear, filtering = false}
             map_manager.exit.backside.Scale = Number3(1, 1, 1)
 
             map_manager.exit_trigger = Quad()
@@ -167,7 +188,7 @@ map_manager.createMap = function(self)
                     self.lamp_flicker1:Play()
                     self.lamp_light1.Color = Color(rand_color, rand_color, rand_color)
                     
-                    Timer(0.05, false, function()
+                    map_manager.timers[#map_manager.timers+1] = Timer(0.05, false, function()
                         if not s.turned_off then
                             self.lamp_light1.Color = Color(255, 255, 255)
                         end
@@ -176,7 +197,7 @@ map_manager.createMap = function(self)
                     self.lamp_flicker2:Play()
                     self.lamp_light2.Color = Color(rand_color, rand_color, rand_color)
                     
-                    Timer(0.05, false, function()
+                    map_manager.timers[#map_manager.timers+1] = Timer(0.05, false, function()
                         if not s.turned_off then
                             self.lamp_light2.Color = Color(255, 255, 255)
                         end
@@ -204,8 +225,8 @@ map_manager.createMap = function(self)
 
     self.lamp.turn_off = function(l)
         l.turned_off = true
-        map_manager.lamp_light1.Color = Color(0, 0, 0)
-        map_manager.lamp_light2.Color = Color(0, 0, 0)
+        map_manager.lamp_light1.On = false
+        map_manager.lamp_light2.On = false
         map_manager.lamp_flicker1:Stop()
         map_manager.lamp_flicker2:Stop()
         map_manager.lamp_sound1:Stop()
@@ -215,8 +236,8 @@ map_manager.createMap = function(self)
 
     self.lamp.turn_on = function(l)
         l.turned_off = false
-        map_manager.lamp_light1.Color = Color(255, 255, 255)
-        map_manager.lamp_light2.Color = Color(255, 255, 255)
+        map_manager.lamp_light1.On = true
+        map_manager.lamp_light2.On = true
         l.light_part.IsUnlit = true
     end
 
@@ -232,11 +253,11 @@ map_manager.createMap = function(self)
     self.lamp_sound2:SetParent(self.map)
     self.lamp_sound2.Position = Number3(30, 20, 30)
     self.lamp_sound2.Spatialized = true
-
-    Timer(1, true, function()
+    
+    map_manager.timers[#map_manager.timers+1] = Timer(1, true, function()
         if not self.lamp.turned_off then
             self.lamp_sound1:Play()
-            Timer(0.5, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(0.5, false, function()
                 if not self.lamp.turned_off then
                     self.lamp_sound2:Play()
                 end
@@ -262,7 +283,7 @@ map_manager.createMap = function(self)
     ambient_sound:Play()
     ambient_sound:SetParent(Camera)
 
-    Timer(3, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(3, false, function()
         self:start_game()
     end)
 
@@ -320,7 +341,7 @@ map_manager.open_exit = function(self)
         self.t = self.t + dt
         if sound ~= nil and not sound.IsPlaying then
             sound:Play()
-            Timer(4.5, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(4.5, false, function()
                 sound:Stop()
                 sound = nil
 
@@ -335,12 +356,12 @@ map_manager.open_exit = function(self)
         if self.t > 1 and self.t < 3 then
             map_manager.exit.Position.X = mathlib.lerp(map_manager.exit.Position.X, 1, 0.05)
         elseif self.t > 3 and self.t < 5 then
-            map_manager.exit.Position.X = mathlib.lerp(map_manager.exit.Position.X, -1, 0.1)
+            map_manager.exit.Position.X = mathlib.lerp(map_manager.exit.Position.X, -1.6, 0.1)
             for key, value in beams do
                 value.Color.A = math.floor(mathlib.lerp(0, 255, 0.5))
             end
         elseif self.t > 5 then
-            map_manager.exit.Position.X = -1
+            map_manager.exit.Position.X = -1.6
             map_manager.exit.Position.Z = mathlib.lerp(map_manager.exit.Position.Z, 40, 0.03)
         end
     end
@@ -353,7 +374,7 @@ map_manager.start_game = function(self)
     narrator_game_start1:SetParent(Camera)
     narrator_game_start1:Play()
 
-    Timer(26, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(26, false, function()
         narrator_game_start1:Destroy()
     end)
 
@@ -384,7 +405,7 @@ map_manager.start_game = function(self)
             if narrator_game_start1.IsPlaying then
                 narrator_game_start1:Stop()
                 map_manager.narrator_glitch:Play()
-                Timer(2, false, function()
+                map_manager.timers[#map_manager.timers+1] = Timer(2, false, function()
                     map_manager:start_pt1_var1()
                     map_manager:use_mechanical_hand(
                         {
@@ -409,13 +430,13 @@ map_manager.start_game = function(self)
                 )
             end
 
-            Timer(1, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(1, false, function()
                 self.sound:Destroy()
             end)
         end
     end
 
-    Timer(3, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(3, false, function()
         self:use_mechanical_hand(
             {
                 position = Number3(30, 10, 50),
@@ -586,6 +607,130 @@ map_manager.use_mechanical_hand = function(self, config)
     return hand
 end
 
+map_manager.use_camera = function(self, config)
+    -- camera, does nothing to other objects, it is decoration
+    local defaulConfig = {
+        position = Number3(30, 25, 30),
+        follow_player = true,
+        follow_speed = 0.05,
+        jitter = true,
+        jitter_amount = 0.05,
+        jitter_speed = 50, -- random from 0 to num every frame
+
+        in_time = 2,
+        out_time = 2,
+        stay_time = 10,
+    }
+
+    local cfg = {0}
+    for k, v in pairs(defaulConfig) do
+        if config[k] ~= nil then
+            cfg[k] = config[k]
+        else
+            cfg[k] = v
+        end
+    end
+
+    local camera = Object() -- parent object
+    camera.Scale = 2
+    camera.camera = models.camera[1]:Copy() -- camera model
+    camera.base = models.camera[2]:Copy() -- handle model to move
+    camera.base:SetParent(camera)
+    camera.camera:SetParent(camera.base)
+
+    -- add red light
+    camera.light = Quad()
+    camera.light:SetParent(camera.camera)
+    camera.light.Color = Color(255, 0, 0)
+    camera.light.Scale = 0.05
+    camera.light.Anchor = Number2(0.5, 0.5)
+    camera.light.IsUnlit = true
+
+    local camera_move = AudioSource()
+    camera_move.Sound = sounds.camera_move
+    camera_move:SetParent(camera)
+    camera_move.Volume = 0.8
+    camera_move.Pitch = (2/cfg.in_time)
+    camera_move.Spatialized = true
+
+    local camera_jitter_rotation = Rotation(0, 0, 0)
+
+    camera_move.played = 0
+
+    -- camera movement is simple, X (pitch) rotation controls on camera model
+    -- rotation Y (yaw) is controlled by base handle model
+    camera.camera.Rotation.X = -2.15
+
+    local d = (Camera.Position - camera.Position):Normalize()
+    local y = math.atan2(d.X, d.Z)
+
+    camera.Rotation.Y = y
+
+    -- apply config
+    camera.Position = Number3(cfg.position.X, 45, cfg.position.Z)
+    camera.t = 0
+
+    -- tick function
+    camera.Tick = function(self, dt)
+        camera.t = camera.t + dt
+        
+        local dir = (Camera.Position - camera.Position):Normalize()
+        local yaw = math.atan2(dir.X, dir.Z) + math.pi + camera_jitter_rotation.Y
+        local pitch = math.asin(dir.Y) + camera_jitter_rotation.X
+
+        if math.random(0, cfg.jitter_speed) == 0 and cfg.jitter then
+            camera_jitter_rotation = Rotation(
+                (math.random(-100, 100)/100)*cfg.jitter_amount,
+                (math.random(-100, 100)/100)*cfg.jitter_amount,
+                0
+            )
+        end
+
+        -- move in
+        if self.t < cfg.in_time then
+            if camera_move.played == 0 then
+                camera_move:Play()
+                camera_move.played = 1
+            end
+
+            self.Position.Y = mathlib.lerp(self.Position.Y, cfg.position.Y, dt*3)
+            
+            camera.base.Rotation:Slerp(camera.base.Rotation, Rotation(0, yaw, 0), dt*3)
+            camera.camera.Rotation:Slerp(camera.camera.Rotation, Rotation(pitch, yaw, 0), dt*3)
+        elseif self.t > cfg.in_time and self.t < cfg.in_time + cfg.stay_time then
+            -- stay
+            camera.base.Rotation:Slerp(camera.base.Rotation, Rotation(0, yaw, 0), dt*3)
+            camera.camera.Rotation:Slerp(camera.camera.Rotation, Rotation(pitch, yaw, 0), dt*3)
+        elseif self.t > cfg.in_time + cfg.stay_time and self.t < cfg.in_time + cfg.stay_time + cfg.out_time then
+            if camera_move.played == 1 then
+                camera_move.Pitch = (2/cfg.out_time)
+                camera_move:Play()
+                camera_move.played = 2
+            end
+
+            -- go out
+            self.Position.Y = mathlib.lerp(self.Position.Y, 45, dt*3)
+
+            camera.base.Rotation = camera.base.Rotation * Rotation(0, 0.15, 0)
+            camera.camera.Rotation:Slerp(camera.camera.Rotation, Rotation(-2.15, camera.base.Rotation.Y, 0), dt*3)
+        elseif self.t > cfg.in_time + cfg.stay_time + cfg.out_time then
+            -- destroy
+            self:Destroy()
+        end
+        
+        if camera ~= nil then
+            camera.light.Position = camera.camera.Position +
+                camera.camera.Backward * 4.73 +
+                camera.camera.Right * 0.7 +
+                camera.camera.Up * 0.2
+        end
+    end
+
+    camera:SetParent(World)
+
+    return camera
+end
+
 
 function map_manager.start_pt1_var1()
     local narrator_pt1_var1_1 = AudioSource()
@@ -593,7 +738,7 @@ function map_manager.start_pt1_var1()
     narrator_pt1_var1_1:SetParent(Camera)
     narrator_pt1_var1_1:Play()
 
-    Timer(20, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(20, false, function()
         narrator_pt1_var1_1:Destroy()
     end)
 
@@ -632,14 +777,14 @@ function map_manager.start_pt1_var1()
             self.Position = self.Position + self.clickedpos
             self.sound:Play()
             self.clickable = false
-            Timer(1, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(1, false, function()
                 self.sound:Destroy()
             end)
 
             if narrator_pt1_var1_1.IsPlaying then
                 narrator_pt1_var1_1:Stop()
                 map_manager.narrator_glitch:Play()
-                Timer(2, false, function()
+                map_manager.timers[#map_manager.timers+1] = Timer(2, false, function()
                     map_manager:start_pt2_var1()
                     map_manager:use_mechanical_hand(
                         {
@@ -666,7 +811,7 @@ function map_manager.start_pt1_var1()
         end
     end
 
-    Timer(15, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(15, false, function()
         map_manager:use_mechanical_hand(
             {
                 position = Number3(30, 10, 50),
@@ -684,7 +829,7 @@ function map_manager.start_pt2_var1()
     narrator_pt2_var1:SetParent(Camera)
     narrator_pt2_var1:Play()
 
-    Timer(8, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(8, false, function()
         narrator_pt2_var1:Destroy()
         map_manager.lamp:turn_off()
 
@@ -700,16 +845,20 @@ function map_manager.start_pt2_var1()
         black_screen.Color = Color(0, 0, 0)
         black_screen.Size = {Screen.Width, Screen.Height}
 
-        Timer(1, false, function()
+        map_manager.timers[#map_manager.timers+1] = Timer(1, false, function()
             for key, value in ipairs(map_manager.floors) do
                 if not value.IsUnlit then
-                    value.Image = {data = textures.floor_concrete_clear, filtering = false}
+                    if not value.isBorder then
+                        value.Image = {data = textures.floor_concrete_clear, filtering = false}
+                    end
                 end
             end
 
             for key, value in ipairs(map_manager.walls) do
                 if not value.IsUnlit then
-                    value.Image = {data = textures.wall_concrete_clear, filtering = false}
+                    if not value.isBorder then
+                        value.Image = {data = textures.wall_concrete_clear, filtering = false}
+                    end
                 end
             end
 
@@ -719,31 +868,56 @@ function map_manager.start_pt2_var1()
             map_manager.isLight = true
 
             for i=1, 10 do
-                Timer(0.1 * i, false, function()
+                map_manager.timers[#map_manager.timers+1] = Timer(0.1 * i, false, function()
                     black_screen.Color.A = 1.0 - (i * 0.1)
                 end)
             end
-            Timer(1, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(1, false, function()
                 black_screen:remove()
                 black_screen = nil
+                
+                map_manager:use_camera({
+                    position = Number3(50, 30, 50),
+                    in_time = 3,
+                    out_time = 1,
+                    stay_time = 10,
+                })
+
+                Timer(16, false, function()
+                    map_manager:use_camera({
+                        position = Number3(50, 30, 10),
+                        in_time = 2,
+                        out_time = 1,
+                        stay_time = 6,
+                    })
+
+                    Timer(0.5, false, function()
+                        map_manager:use_camera({
+                            position = Number3(10, 25, 50),
+                            in_time = 1,
+                            out_time = 2,
+                            stay_time = 9,
+                        })
+                    end)
+                end)
             end)
         end)
 
-        Timer(5, false, function()
+        map_manager.timers[#map_manager.timers+1] = Timer(5, false, function()
             impact_sound:Destroy()
             local new_voice_assistant = AudioSource()
             new_voice_assistant.Sound = sounds.new_voice_assistant
             new_voice_assistant:SetParent(Camera)
             new_voice_assistant:Play()
 
-            Timer(26, false, function()
+            map_manager.timers[#map_manager.timers+1] = Timer(26, false, function()
                 new_voice_assistant:Destroy()
                 map_manager.lamp:turn_on()
                 local sound = AudioSource()
                 sound.Sound = sounds.light_switch
                 sound:SetParent(Camera)
                 sound:Play()
-                Timer(3, false, function()
+                map_manager.timers[#map_manager.timers+1] = Timer(3, false, function()
                     sound:Destroy()
 
                     local new_assistant = AudioSource()
@@ -751,7 +925,7 @@ function map_manager.start_pt2_var1()
                     new_assistant:SetParent(Camera)
                     new_assistant:Play()
 
-                    Timer(31, false, function()
+                    map_manager.timers[#map_manager.timers+1] = Timer(31, false, function()
                         -- spawn the lever
                         map_manager.lever = Object()
                         map_manager.lever.base = models.lever[1]:Copy()
@@ -783,7 +957,7 @@ function map_manager.start_pt2_var1()
                                     new_assistant:Destroy()
                                 end
 
-                                Timer(1, false, function()
+                                map_manager.timers[#map_manager.timers+1] = Timer(1, false, function()
                                     map_manager:use_mechanical_hand(
                                         {
                                             position = Number3(30, 10, 50),
@@ -874,7 +1048,7 @@ function map_manager.start_leave_lever(self)
         end
     end
 
-    Timer(18, false, function()
+    map_manager.timers[#map_manager.timers+1] = Timer(25, false, function()
         map_manager:use_mechanical_hand(
             {
                 position = Number3(30, 10, 10),
@@ -885,6 +1059,47 @@ function map_manager.start_leave_lever(self)
                 time_multiplier = 1.5,
             }
         )
+    end)
+
+    Timer(3, false, function()
+        map_manager:use_camera({
+            position = Number3(50, 25, 50),
+            in_time = 2,
+            out_time = 2,
+            stay_time = 20-0.25,
+        })
+    end)
+    Timer(3.5, false, function()
+        map_manager:use_camera({
+            position = Number3(50, 22, 40),
+            in_time = 2,
+            out_time = 2,
+            stay_time = 19.5-0.5,
+        })
+    end)
+    Timer(4, false, function()
+        map_manager:use_camera({
+            position = Number3(50, 20, 30),
+            in_time = 2,
+            out_time = 2,
+            stay_time = 19-0.75,
+        })
+    end)
+    Timer(4.5, false, function()
+        map_manager:use_camera({
+            position = Number3(50, 22, 20),
+            in_time = 2,
+            out_time = 2,
+            stay_time = 18.5-1,
+        })
+    end)
+    Timer(5, false, function()
+        map_manager:use_camera({
+            position = Number3(50, 25, 10),
+            in_time = 2,
+            out_time = 2,
+            stay_time = 18-1.25,
+        })
     end)
 end
 
@@ -963,6 +1178,22 @@ map_manager.getFloors = function()
             rot = Rotation(math.pi/2, 0, 0),
             isWhite = true,
         },
+
+        {
+            pos = Number3(0, 1-0.001, 0),
+            rot = Rotation(math.pi/2, math.pi, 0),
+            isBorder = true
+        },
+        {
+            pos = Number3(0, 1-0.001, 1),
+            rot = Rotation(math.pi/2, math.pi, 0),
+            isBorder = true
+        },
+        {
+            pos = Number3(0, 1-0.001, 2),
+            rot = Rotation(math.pi/2, math.pi, 0),
+            isBorder = true
+        },
     }
 
     return floor_table
@@ -982,6 +1213,16 @@ map_manager.getWalls = function()
             pos = Number3(2, 0, 0),
             rot = Rotation(0, 0, 0),
         },
+
+        {
+            pos = Number3(-0.0625, 0, 0),
+            rot = Rotation(0, -math.pi/2, 0),
+        },
+        {
+            pos = Number3(-0.0625, 0, 2),
+            rot = Rotation(0, -math.pi/2, 0),
+        },
+
         {
             pos = Number3(0, 0, 3),
             rot = Rotation(0, 0, 0),
@@ -1079,6 +1320,19 @@ map_manager.getWalls = function()
             pos = Number3(3, 1, 2),
             rot = Rotation(0, -math.pi/2, 0),
             make_darker = true
+        },
+
+
+
+        {
+            pos = Number3(0, 0, 1),
+            rot = Rotation(0, math.pi, 0),
+            isBorder = true
+        },
+        {
+            pos = Number3(0, 0, 2),
+            rot = Rotation(0, math.pi, 0),
+            isBorder = true
         },
 
 
