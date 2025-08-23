@@ -6,6 +6,7 @@ Modules = {
     advanced_ui = "modules/advanced_ui.lua",
     map_manager = "modules/map_manager.lua",
     player_controller = "modules/player_controller.lua",
+    physics_prop = "modules/physics_prop.lua",
 }
 
 Models = {
@@ -15,6 +16,7 @@ Models = {
     lever = "models/lever.glb",
     rusty_tube = "models/rusty_tube.glb",
     camera = "models/camera.glb",
+    paper = "models/paper.glb",
 
     test = "models/test.glb",
 }
@@ -29,6 +31,7 @@ Textures = {
     pointer = "textures/pointer.png",
     white_gradient = "textures/white_gradient.png",
     border_concrete_clear = "textures/border_concrete_clear.png",
+    paper = "textures/paper.png",
 
     --debug
     lightbulb = "textures/lightbulb.png",
@@ -47,6 +50,8 @@ Sounds = {
     exit_door_open1 = "sounds/exit_door_open1.mp3",
     exit_door_open2 = "sounds/exit_door_open2.mp3",
     camera_move = "sounds/camera_move.mp3",
+    paper_crinkle = "sounds/paper_crinkle.mp3",
+    paper_hit = "sounds/paper_hit.mp3",
 
     pt1_var1 = "sounds/pt1_var1.mp3",
     voice_glitch = "sounds/voice_glitch.mp3",
