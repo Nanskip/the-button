@@ -15,6 +15,8 @@ Models = {
     lever = "models/lever.glb",
     rusty_tube = "models/rusty_tube.glb",
     camera = "models/camera.glb",
+
+    test = "models/test.glb",
 }
 
 Textures = {
@@ -57,11 +59,11 @@ Sounds = {
 }
 
 Data = {
-
+    you_pressed_the_lever = "data/you_pressed_the_lever.json",
 }
 
 Other = {
-    vcr_font = "other/vcr_font.ttf",
+    
 }
 
 _ON_START = function()

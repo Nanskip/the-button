@@ -11,6 +11,8 @@ function mathlib.easeOutBack(a, b, t)
     return a + (b - a) * e
 end
 
-
+function mathlib.round(num)
+    return math.floor(num + 0.5)
+end
 
 return mathlib

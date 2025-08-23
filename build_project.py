@@ -120,6 +120,7 @@ HTTP:Get("{url}", function(res)
                 end
                 asset:SetParent(nil)
                 _log("Downloaded and loaded model {key}")
+                loading_screen:loading_text_update("Downloaded model {key} [" .. loaded .. "/" .. to_load .. "]")
             end
             loaded = loaded + 1
             _check_ready()
@@ -142,6 +143,7 @@ HTTP:Get("{url}", function(res)
     if res.StatusCode == 200 then
         {group}.{key} = res.Body
         _log("Downloaded {group}/{key}")
+        loading_screen:loading_text_update("Downloaded {group}/{key} [" .. loaded .. "/" .. to_load .. "]")
     else
         _log("Failed to download {group}/{key}: " .. res.StatusCode)
     end
@@ -200,6 +202,39 @@ def build_project(source_dir, output_file, github_base_url):
                     assets["other"][key] = file
 
     build_code = generate_build({}, assets, main_code, github_base_url, module_sources)
+
+    def remove_lua_comments(code):
+        result = []
+        in_string = False
+        string_char = ""
+        i = 0
+        while i < len(code):
+            c = code[i]
+            if in_string:
+                result.append(c)
+                if c == string_char:
+                    # проверяем экранирование
+                    if i == 0 or code[i-1] != "\\":
+                        in_string = False
+                i += 1
+            else:
+                if c in ('"', "'"):
+                    in_string = True
+                    string_char = c
+                    result.append(c)
+                    i += 1
+                elif c == "-" and i+1 < len(code) and code[i+1] == "-":
+                    # нашли комментарий, пропускаем до конца строки
+                    while i < len(code) and code[i] != "\n":
+                        i += 1
+                else:
+                    result.append(c)
+                    i += 1
+        return "".join(result)
+
+
+    # перед записью файла
+    build_code = remove_lua_comments(build_code)
     # add a random 8 number to the end of the file name to prevent overwriting
     build_code += "\n-- hash: " + str(random.randint(100000000, 999999999))
     os.makedirs(os.path.dirname(output_file), exist_ok=True)

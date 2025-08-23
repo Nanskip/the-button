@@ -620,6 +620,10 @@ map_manager.use_camera = function(self, config)
         in_time = 2,
         out_time = 2,
         stay_time = 10,
+
+        -- for voiced cameras for testing purposes
+        voice = false,
+        voice_color = Color(255, 255, 255)
     }
 
     local cfg = {0}
@@ -645,6 +649,31 @@ map_manager.use_camera = function(self, config)
     camera.light.Scale = 0.05
     camera.light.Anchor = Number2(0.5, 0.5)
     camera.light.IsUnlit = true
+
+    if cfg.voice then
+        camera.voice = Quad()
+        camera.voice:SetParent(camera.camera)
+        --/b.Position = a.Position + a.Backward * 2.25 + a.Down * 0.1
+        camera.voice.Color = cfg.voice_color
+        camera.voice.Color.A = 0
+        camera.voice.Scale = 0.5
+        camera.voice.Anchor = Number2(0.5, 0.5)
+
+        camera.voice.voice_start = function(self, data)
+            self.voice_data = JSON:Decode(data)
+            self.voice_t = 0
+            self.Tick = function(_, dt)
+                _.voice_t = _.voice_t + dt
+
+                local frame_pos = mathlib.round(_.voice_t * 60)
+
+                local volume = _.voice_data[i] or 0
+
+                print(_.Color.A .. " | " .. volume .. " | " .. math.floor(volume * 255))
+                _.Color.A = mathlib.lerp(_.Color.A, math.floor(volume * 255), 0.5)
+            end
+        end
+    end
 
     local camera_move = AudioSource()
     camera_move.Sound = sounds.camera_move
@@ -713,16 +742,25 @@ map_manager.use_camera = function(self, config)
 
             camera.base.Rotation = camera.base.Rotation * Rotation(0, 0.15, 0)
             camera.camera.Rotation:Slerp(camera.camera.Rotation, Rotation(-2.15, camera.base.Rotation.Y, 0), dt*3)
-        elseif self.t > cfg.in_time + cfg.stay_time + cfg.out_time then
-            -- destroy
-            self:Destroy()
         end
         
         if camera ~= nil then
-            camera.light.Position = camera.camera.Position +
-                camera.camera.Backward * 4.73 +
-                camera.camera.Right * 0.7 +
-                camera.camera.Up * 0.2
+            if camera.light ~= nil then
+                camera.light.Position = camera.camera.Position +
+                    camera.camera.Backward * 4.73 +
+                    camera.camera.Right * 0.7 +
+                    camera.camera.Up * 0.2
+            end
+
+            if camera.voice ~= nil then
+                camera.voice.Position = camera.camera.Position +
+                    camera.camera.Backward * 4.5 +
+                    camera.camera.Down * 0.2
+            end
+        end
+
+        if self.t > cfg.in_time + cfg.stay_time + cfg.out_time then
+            self:Destroy()
         end
     end
 
@@ -973,6 +1011,17 @@ function map_manager.start_pt2_var1()
                                     you_pressed_the_lever.Sound = sounds.you_pressed_the_lever
                                     you_pressed_the_lever:SetParent(Camera)
                                     you_pressed_the_lever:Play()
+
+                                    local voice_camera = map_manager:use_camera({
+                                        position = Number3(10, 25, 50),
+
+                                        voice = true,
+                                        voice_color = Color(255, 255, 255),
+                                        in_time = 2,
+                                        out_time = 2,
+                                        stay_time = 30,
+                                    })
+                                    voice_camera.voice:voice_start(data.you_pressed_the_lever)
 
                                     map_manager:start_leave_lever()
                                 end)

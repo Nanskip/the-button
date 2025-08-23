@@ -49,6 +49,11 @@ loading_screen.loading_text_update = function(self, text)
     end
     if self.loading_text ~= nil then
         self.loading_text.Text = text
+        local basePos = {Screen.Width/2, Screen.Height/2}
+        self.loading_text.pos = {
+            basePos[1] - self.loading_text.Width/2,
+            basePos[2] - self.loading_text.Height/2 - self.loading_text.Height - 5
+        }
     end
 end
 
